@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Research Paper LaTeX Builder</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #16a34a;
+            --success-bg: rgba(34,197,94,0.15);
+            --warning: #b45309;
+            --warning-bg: rgba(234,179,8,0.18);
+            --error: #dc2626;
+            --error-bg: rgba(239,68,68,0.15);
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 300px; background-color: var(--card-bg); border-right: 1px solid var(--border); padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 20px; }
+        .app-brand { font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px; }
+        .app-sub { opacity: 0.7; font-size: 0.85rem; margin-top: -5px; }
+        hr { border: 0; border-top: 1px solid var(--border); margin: 10px 0; }
+        label { font-size: 0.9rem; font-weight: 600; display: block; margin-bottom: 6px; }
+        input[type="text"], input[type="number"], select, textarea { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; box-sizing: border-box; font-family: inherit; margin-bottom: 10px; }
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; font-weight: 600; font-size: 0.9rem; width: 100%; transition: all 0.2s; }
+        .btn-primary { background-color: var(--primary); color: white; }
+        .btn-primary:hover { background-color: var(--primary-hover); }
+        .btn-secondary { background-color: #f1f5f9; color: var(--text-main); border: 1px solid var(--border); }
+        .btn-secondary:hover { background-color: #e2e8f0; }
+
+        /* Main Content */
+        .main-content { flex: 1; padding: 30px 40px; overflow-y: auto; }
+        h1 { margin-top: 0; font-size: 2rem; }
+        
+        /* Metrics */
+        .metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 30px; }
+        .metric-card { background: rgba(128,128,128,0.07); border-radius: 10px; padding: 15px 20px; }
+        .metric-label { font-size: 0.85rem; color: var(--text-muted); font-weight: 600; margin-bottom: 5px; }
+        .metric-value { font-size: 1.8rem; font-weight: 700; }
+
+        /* Tabs */
+        .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; gap: 20px; flex-wrap: wrap;}
+        .tab { padding: 10px 5px; cursor: pointer; font-weight: 600; color: var(--text-muted); border-bottom: 2px solid transparent; }
+        .tab.active { color: var(--primary); border-bottom: 2px solid var(--primary); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Cards and Layouts */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+        
+        /* Tables */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { padding: 10px; text-align: left; border-bottom: 1px solid var(--border); }
+        th { font-size: 0.85rem; color: var(--text-muted); }
+        
+        /* Badges & Specifics */
+        .badge { display:inline-block; padding: 4px 12px; border-radius: 999px; font-size: 0.78rem; font-weight: 600; margin-right: 6px; margin-bottom: 6px; }
+        .badge-success { background: var(--success-bg); color: var(--success); }
+        .badge-warning { background: var(--warning-bg); color: var(--warning); }
+        .badge-error { background: var(--error-bg); color: var(--error); }
+        .paper-card { border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 12px; background: var(--card-bg);}
+        .paper-title { font-weight: 700; font-size: 1.02rem; margin-bottom: 8px;}
+        .meta-line { color: var(--text-muted); font-size: 0.85rem; margin-bottom: 4px; }
+        pre { background: #1e293b; color: #f8fafc; padding: 20px; border-radius: 10px; overflow-x: auto; white-space: pre-wrap; }
+        
+        .section-expander { border: 1px solid var(--border); border-radius: 8px; margin-bottom: 10px; background: var(--card-bg); }
+        .section-header { padding: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; }
+        .section-body { padding: 15px; border-top: 1px solid var(--border); display: none; }
+        .section-body.open { display: block; }
+
+        /* Loader */
+        .loader { display: none; border: 3px solid #f3f3f3; border-top: 3px solid var(--primary); border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; margin: 0 auto;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+<div class="sidebar">
+    <div>
+        <div class="app-brand">📄 LaTeX Builder</div>
+        <div class="app-sub">Research Paper → Overleaf ZIP</div>
+    </div>
+    <hr>
+    <div>
+        <h3 style="margin-top:0;">Project Actions</h3>
+        <button class="btn btn-secondary" onclick="resetProject()">🔄 Reset Project</button>
+    </div>
+    <hr>
+    <div>
+        <h3>Journal & Citation</h3>
+        <label>Target Journal</label>
+        <select id="sel_journal" onchange="syncField('project.journal', this.value)">
+            <option value="IEEE">IEEE</option><option value="Springer">Springer</option>
+            <option value="Elsevier">Elsevier</option><option value="ACM">ACM</option>
+            <option value="Nature">Nature</option><option value="Taylor & Francis">Taylor & Francis</option>
+            <option value="Custom">Custom</option>
+        </select>
+        <label>Citation Style</label>
+        <select id="sel_citation" onchange="syncField('citation_style', this.value)">
+            <option value="IEEE">IEEE</option><option value="APA">APA</option>
+            <option value="MLA">MLA</option><option value="Chicago">Chicago</option>
+        </select>
+    </div>
+    <hr>
+    <div>
+        <h3>Export Options</h3>
+        <label><input type="checkbox" id="chk_figures" onchange="syncField('export_include_figures', this.checked)"> Include Figures</label>
+        <label><input type="checkbox" id="chk_charts" onchange="syncField('export_include_charts', this.checked)"> Include Charts</label>
+    </div>
+</div>
+
+<div class="main-content">
+    <h1>Research Paper LaTeX Builder</h1>
+    
+    <div class="metrics">
+        <div class="metric-card"><div class="metric-label">PDFs Uploaded</div><div class="metric-value" id="m_pdfs">0</div></div>
+        <div class="metric-card"><div class="metric-label">References Extracted</div><div class="metric-value" id="m_refs">0</div></div>
+        <div class="metric-card"><div class="metric-label">Figures Uploaded</div><div class="metric-value" id="m_figs">0</div></div>
+        <div class="metric-card"><div class="metric-label">Sections Generated</div><div class="metric-value" id="m_secs">0</div></div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab(0)">Project Setup</div>
+        <div class="tab" onclick="switchTab(1)">Reference Manager</div>
+        <div class="tab" onclick="switchTab(2)">Figures & Charts</div>
+        <div class="tab" onclick="switchTab(3)">Knowledge Base</div>
+        <div class="tab" onclick="switchTab(4)">Section Generator</div>
+        <div class="tab" onclick="switchTab(5)">Validation</div>
+        <div class="tab" onclick="switchTab(6)">LaTeX Preview</div>
+        <div class="tab" onclick="switchTab(7)">Export</div>
+    </div>
+
+    <div class="tab-content active" id="tab-0">
+        <div class="grid-2">
+            <div class="card">
+                <label>Paper Title</label>
+                <input type="text" id="p_title" onchange="syncField('project.title', this.value)">
+                <label>Research Domain</label>
+                <input type="text" id="p_domain" onchange="syncField('project.domain', this.value)">
+                <label>Keywords (comma separated)</label>
+                <input type="text" id="p_keywords" onchange="syncField('project.keywords', this.value)">
+            </div>
+            <div class="card">
+                <label>Formatting</label>
+                <select id="p_columns" onchange="syncField('project.columns', this.value)">
+                    <option value="Single Column">Single Column</option><option value="Double Column">Double Column</option>
+                </select>
+                <label>Page Limit</label>
+                <input type="number" id="p_limit" onchange="syncField('project.page_limit', parseInt(this.value))">
+                <label>Target Character Count</label>
+                <input type="number" id="p_chars" onchange="syncField('project.char_target', parseInt(this.value))">
+            </div>
+        </div>
+        <div class="card">
+            <label>Abstract Notes</label>
+            <textarea id="p_notes" rows="3" onchange="syncField('project.abstract_notes', this.value)"></textarea>
+        </div>
+        
+        <div class="card">
+            <h3>Authors</h3>
+            <table id="authors_table">
+                <thead><tr><th>Name</th><th>Affiliation</th><th>Email</th><th>ORCID</th><th>Corresponding</th><th>Act</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <button class="btn btn-secondary" style="width:auto;" onclick="addAuthorRow()">+ Add Author</button>
+        </div>
+
+        <div class="card">
+            <h3>Equipment</h3>
+            <table id="equipment_table">
+                <thead><tr><th>Equipment Name</th><th>Model</th><th>Manufacturer</th><th>Act</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <button class="btn btn-secondary" style="width:auto;" onclick="addEquipmentRow()">+ Add Equipment</button>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-1">
+        <div class="card">
+            <h3>Upload Research Papers (PDF)</h3>
+            <input type="file" id="pdf_upload" multiple accept=".pdf">
+            <button class="btn btn-primary" style="margin-top:10px;" onclick="extractPdfs()">📥 Extract Metadata</button>
+            <div id="pdf_loader" class="loader" style="margin-top:10px;"></div>
+        </div>
+        <div class="card" id="refs_container">
+            <h3>Extracted References</h3>
+            <table id="refs_table">
+                <thead><tr><th>Title</th><th>Authors</th><th>Year</th><th>DOI</th></tr></thead>
+                <tbody></tbody>
+            </table>
+            <button class="btn btn-secondary" onclick="window.location.href='/api/bibtex'">⬇️ Download references.bib</button>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-2">
+        <div class="card">
+            <h3>Figure Upload</h3>
+            <input type="file" id="fig_upload" multiple accept=".png,.jpg,.jpeg,.svg">
+            <button class="btn btn-primary" style="margin-top:10px;" onclick="uploadFigures()">Upload Figures</button>
+            <div id="figs_list" style="margin-top:15px;"></div>
+        </div>
+        <div class="card">
+            <h3>Chart Builder</h3>
+            <input type="file" id="csv_upload" accept=".csv" onchange="parseCSVColumns()">
+            <div class="grid-2" style="margin-top:10px;">
+                <div><label>X axis</label><select id="chart_x"></select></div>
+                <div><label>Y axis</label><select id="chart_y"></select></div>
+                <div><label>Chart Type</label><select id="chart_type"><option>Line</option><option>Bar</option><option>Scatter</option><option>Histogram</option></select></div>
+                <div><label>Chart Name</label><input type="text" id="chart_name" value="my_chart"></div>
+            </div>
+            <button class="btn btn-primary" onclick="generateChart()">📊 Generate Chart</button>
+            <div id="charts_list" style="margin-top:15px;"></div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-3">
+        <div class="card">
+            <input type="text" id="kb_search" placeholder="🔍 Search knowledge base..." onkeyup="renderKB()">
+            <div id="kb_list" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <div class="tab-content" id="tab-4">
+        <label><input type="checkbox" id="chk_fact" checked onchange="syncField('fact_lock', this.checked)"> 🔒 Fact Lock Mode</label>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom:20px;">
+            <button class="btn btn-secondary" onclick="generateSection('Abstract')">✨ Abstract</button>
+            <button class="btn btn-secondary" onclick="generateSection('Introduction')">✨ Introduction</button>
+            <button class="btn btn-secondary" onclick="generateSection('Literature Review')">✨ Literature Review</button>
+            <button class="btn btn-secondary" onclick="generateSection('Methodology')">✨ Methodology</button>
+            <button class="btn btn-secondary" onclick="generateSection('Results')">✨ Results</button>
+            <button class="btn btn-secondary" onclick="generateSection('Discussion')">✨ Discussion</button>
+            <button class="btn btn-secondary" onclick="generateSection('Conclusion')">✨ Conclusion</button>
+        </div>
+        <div id="sections_container"></div>
+    </div>
+
+    <div class="tab-content" id="tab-5">
+        <button class="btn btn-primary" onclick="runValidation()">✅ Run Validation</button>
+        <div id="validation_results" style="margin-top: 20px;"></div>
+    </div>
+
+    <div class="tab-content" id="tab-6">
+        <button class="btn btn-primary" onclick="buildLatex()">🛠️ Generate LaTeX</button>
+        <pre id="latex_output" style="margin-top: 20px;">Generate sections, then build the LaTeX preview.</pre>
+    </div>
+
+    <div class="tab-content" id="tab-7">
+        <p>Exports a ZIP with main.tex, references.bib, figures/, tables/, and README.md.</p>
+        <button class="btn btn-primary" onclick="window.location.href='/api/download_zip'">📦 Build Project ZIP</button>
+    </div>
+
+</div>
+
+<script>
+    let appState = {};
+    const sectionsList = ["Abstract", "Introduction", "Literature Review", "Methodology", "Results", "Discussion", "Conclusion"];
+
+    async function loadState() {
+        const res = await fetch('/api/state');
+        appState = await res.json();
+        renderUI();
+    }
+
+    async function syncField(path, value) {
+        let keys = path.split('.');
+        if(keys.length === 1) appState[keys[0]] = value;
+        else appState[keys[0]][keys[1]] = value;
+        await fetch('/api/state', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(appState)
+        });
+    }
+
+    async function syncFullState() {
+        await fetch('/api/state', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(appState)
+        });
+        updateMetrics();
+    }
+
+    function renderUI() {
+        // Sidebar
+        document.getElementById('sel_journal').value = appState.project.journal;
+        document.getElementById('sel_citation').value = appState.citation_style;
+        document.getElementById('chk_figures').checked = appState.export_include_figures;
+        document.getElementById('chk_charts').checked = appState.export_include_charts;
+        
+        // Tab 0
+        document.getElementById('p_title').value = appState.project.title;
+        document.getElementById('p_domain').value = appState.project.domain;
+        document.getElementById('p_keywords').value = appState.project.keywords;
+        document.getElementById('p_columns').value = appState.project.columns;
+        document.getElementById('p_limit').value = appState.project.page_limit;
+        document.getElementById('p_chars').value = appState.project.char_target;
+        document.getElementById('p_notes').value = appState.project.abstract_notes;
+        
+        renderAuthors();
+        renderEquipment();
+        
+        // Tab 1
+        renderRefs();
+        // Tab 2
+        renderFigures();
+        renderCharts();
+        // Tab 3
+        renderKB();
+        // Tab 4
+        document.getElementById('chk_fact').checked = appState.fact_lock;
+        renderSections();
+        // Tab 5
+        renderValidation(appState.validation_report);
+        // Tab 6
+        if(appState.latex_output) document.getElementById('latex_output').textContent = appState.latex_output;
+
+        updateMetrics();
+    }
+
+    function updateMetrics() {
+        document.getElementById('m_pdfs').innerText = appState.papers.length;
+        document.getElementById('m_refs').innerText = appState.papers.length;
+        document.getElementById('m_figs').innerText = appState.figures.length + appState.charts.length;
+        document.getElementById('m_secs').innerText = Object.keys(appState.sections).filter(k=>appState.sections[k]).length;
+    }
+
+    function switchTab(idx) {
+        document.querySelectorAll('.tab').forEach((el, i) => {
+            el.classList.toggle('active', i === idx);
+        });
+        document.querySelectorAll('.tab-content').forEach((el, i) => {
+            el.classList.toggle('active', i === idx);
+        });
+    }
+
+    // --- Dynamic Tables ---
+    function renderAuthors() {
+        const tbody = document.querySelector('#authors_table tbody');
+        tbody.innerHTML = '';
+        appState.project.authors.forEach((a, i) => {
+            tbody.innerHTML += `<tr>
+                <td><input type="text" value="${a.Name}" onchange="appState.project.authors[${i}].Name=this.value; syncFullState()"></td>
+                <td><input type="text" value="${a.Affiliation}" onchange="appState.project.authors[${i}].Affiliation=this.value; syncFullState()"></td>
+                <td><input type="text" value="${a.Email}" onchange="appState.project.authors[${i}].Email=this.value; syncFullState()"></td>
+                <td><input type="text" value="${a.ORCID}" onchange="appState.project.authors[${i}].ORCID=this.value; syncFullState()"></td>
+                <td><input type="checkbox" ${a.Corresponding ? 'checked' : ''} onchange="appState.project.authors[${i}].Corresponding=this.checked; syncFullState()"></td>
+                <td><button onclick="appState.project.authors.splice(${i},1); syncFullState(); renderAuthors()">X</button></td>
+            </tr>`;
+        });
+    }
+    function addAuthorRow() {
+        appState.project.authors.push({"Name": "", "Affiliation": "", "Email": "", "ORCID": "", "Corresponding": false});
+        renderAuthors(); syncFullState();
+    }
+
+    function renderEquipment() {
+        const tbody = document.querySelector('#equipment_table tbody');
+        tbody.innerHTML = '';
+        appState.project.equipment.forEach((e, i) => {
+            tbody.innerHTML += `<tr>
+                <td><input type="text" value="${e['Equipment Name']}" onchange="appState.project.equipment[${i}]['Equipment Name']=this.value; syncFullState()"></td>
+                <td><input type="text" value="${e.Model}" onchange="appState.project.equipment[${i}].Model=this.value; syncFullState()"></td>
+                <td><input type="text" value="${e.Manufacturer}" onchange="appState.project.equipment[${i}].Manufacturer=this.value; syncFullState()"></td>
+                <td><button onclick="appState.project.equipment.splice(${i},1); syncFullState(); renderEquipment()">X</button></td>
+            </tr>`;
+        });
+    }
+    function addEquipmentRow() {
+        appState.project.equipment.push({"Equipment Name": "", "Model": "", "Manufacturer": ""});
+        renderEquipment(); syncFullState();
+    }
+
+    // --- Actions ---
+    async function resetProject() {
+        await fetch('/api/reset', {method: 'POST'});
+        window.location.reload();
+    }
+
+    async function extractPdfs() {
+        const files = document.getElementById('pdf_upload').files;
+        if(!files.length) return;
+        document.getElementById('pdf_loader').style.display = 'block';
+        const fd = new FormData();
+        for(let i=0; i<files.length; i++) fd.append('files', files[i]);
+        
+        const res = await fetch('/api/extract_pdfs', { method: 'POST', body: fd });
+        const data = await res.json();
+        appState.papers = data.papers;
+        document.getElementById('pdf_loader').style.display = 'none';
+        renderRefs(); updateMetrics(); renderKB();
+    }
+
+    function renderRefs() {
+        const tbody = document.querySelector('#refs_table tbody');
+        tbody.innerHTML = '';
+        appState.papers.forEach((p, i) => {
+            tbody.innerHTML += `<tr>
+                <td><input type="text" value="${p.title||''}" onchange="appState.papers[${i}].title=this.value; syncFullState()"></td>
+                <td><input type="text" value="${p.authors||''}" onchange="appState.papers[${i}].authors=this.value; syncFullState()"></td>
+                <td><input type="text" value="${p.year||''}" onchange="appState.papers[${i}].year=this.value; syncFullState()"></td>
+                <td><input type="text" value="${p.doi||''}" onchange="appState.papers[${i}].doi=this.value; syncFullState()"></td>
+            </tr>`;
+        });
+    }
+
+    async function uploadFigures() {
+        const files = document.getElementById('fig_upload').files;
+        if(!files.length) return;
+        const fd = new FormData();
+        for(let i=0; i<files.length; i++) fd.append('figures', files[i]);
+        const res = await fetch('/api/upload_figure', { method: 'POST', body: fd });
+        const data = await res.json();
+        appState.figures = data.figures;
+        renderFigures(); updateMetrics();
+    }
+
+    function renderFigures() {
+        const container = document.getElementById('figs_list');
+        container.innerHTML = '';
+        appState.figures.forEach((f, i) => {
+            container.innerHTML += `<div class="section-expander">
+                <div class="section-header" onclick="this.nextElementSibling.classList.toggle('open')">🖼️ ${f.name}</div>
+                <div class="section-body">
+                    <img src="${f.b64}" style="max-width:100%; height:auto; margin-bottom:10px;">
+                    <label>Caption</label><input type="text" value="${f.caption}" onchange="appState.figures[${i}].caption=this.value; syncFullState()">
+                    <label>Label</label><input type="text" value="${f.label}" onchange="appState.figures[${i}].label=this.value; syncFullState()">
+                    <label>Placement</label>
+                    <select onchange="appState.figures[${i}].placement=this.value; syncFullState()">
+                        <option value="h" ${f.placement==='h'?'selected':''}>h</option>
+                        <option value="t" ${f.placement==='t'?'selected':''}>t</option>
+                        <option value="b" ${f.placement==='b'?'selected':''}>b</option>
+                        <option value="htbp" ${f.placement==='htbp'?'selected':''}>htbp</option>
+                    </select>
+                </div>
+            </div>`;
+        });
+    }
+
+    async function parseCSVColumns() {
+        const file = document.getElementById('csv_upload').files[0];
+        if(!file) return;
+        document.getElementById('chart_name').value = file.name.split('.')[0];
+        const fd = new FormData(); fd.append('csv', file);
+        const res = await fetch('/api/parse_csv_columns', { method: 'POST', body: fd });
+        const data = await res.json();
+        const selX = document.getElementById('chart_x'); const selY = document.getElementById('chart_y');
+        selX.innerHTML = ''; selY.innerHTML = '';
+        data.columns.forEach((c, i) => {
+            selX.innerHTML += `<option value="${c}">${c}</option>`;
+            selY.innerHTML += `<option value="${c}" ${i===1?'selected':''}>${c}</option>`;
+        });
+    }
+
+    async function generateChart() {
+        const file = document.getElementById('csv_upload').files[0];
+        if(!file) return;
+        const fd = new FormData();
+        fd.append('csv', file);
+        fd.append('x_col', document.getElementById('chart_x').value);
+        fd.append('y_col', document.getElementById('chart_y').value);
+        fd.append('chart_type', document.getElementById('chart_type').value);
+        fd.append('chart_name', document.getElementById('chart_name').value);
+        
+        const res = await fetch('/api/generate_chart', { method: 'POST', body: fd });
+        await loadState(); // Reload state to get chart
+    }
+
+    function renderCharts() {
+        const container = document.getElementById('charts_list');
+        container.innerHTML = '';
+        appState.charts.forEach((c, i) => {
+            container.innerHTML += `<div class="section-expander">
+                <div class="section-header" onclick="this.nextElementSibling.classList.toggle('open')">📈 ${c.name} (${c.type})</div>
+                <div class="section-body open"><img src="${c.b64}" style="max-width:100%;"></div>
+            </div>`;
+        });
+    }
+
+    function renderKB() {
+        const q = document.getElementById('kb_search').value.toLowerCase();
+        const container = document.getElementById('kb_list');
+        container.innerHTML = '';
+        appState.papers.forEach(p => {
+            const txt = JSON.stringify(p).toLowerCase();
+            if(q && !txt.includes(q)) return;
+            container.innerHTML += `<div class="paper-card">
+                <div class="paper-title">${p.title || p.source_file}</div>
+                <div class="meta-line">Authors: ${p.authors||'—'} | Year: ${p.year||'—'}</div>
+                <div class="meta-line"><b>Methodology:</b> ${p.methodology||'—'}</div>
+                <div class="meta-line"><b>Results:</b> ${p.results||'—'}</div>
+                <div class="meta-line"><b>Limitations:</b> ${p.limitations||'—'}</div>
+            </div>`;
+        });
+    }
+
+    async function generateSection(secName) {
+        const btn = event.target;
+        const ogText = btn.innerText;
+        btn.innerText = `⏳ Generating...`;
+        const res = await fetch('/api/generate_section', {
+            method: 'POST', headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({section: secName})
+        });
+        const data = await res.json();
+        appState.sections[secName] = data.text;
+        btn.innerText = ogText;
+        renderSections(); updateMetrics();
+    }
+
+    function renderSections() {
+        const container = document.getElementById('sections_container');
+        container.innerHTML = '';
+        sectionsList.forEach(s => {
+            const text = appState.sections[s] || "";
+            const words = text ? text.split(/\s+/).length : 0;
+            const isOpen = text ? 'open' : '';
+            container.innerHTML += `<div class="section-expander">
+                <div class="section-header" onclick="this.nextElementSibling.classList.toggle('open')">
+                    ${s} <span style="font-weight:normal; font-size:0.85rem; color:var(--text-muted);">(${words} words)</span>
+                </div>
+                <div class="section-body ${isOpen}">
+                    <textarea rows="8" onchange="appState.sections['${s}']=this.value; syncFullState()">${text}</textarea>
+                </div>
+            </div>`;
+        });
+    }
+
+    async function runValidation() {
+        const res = await fetch('/api/validate', { method: 'POST' });
+        const report = await res.json();
+        appState.validation_report = report;
+        renderValidation(report);
+    }
+
+    function renderValidation(report) {
+        const container = document.getElementById('validation_results');
+        if(!report) { container.innerHTML = '<p>Run validation to check the paper for issues.</p>'; return; }
+        
+        let html = `<div class="grid-2" style="margin-bottom:20px;">
+            <div class="metric-card"><div class="metric-label">Success</div><div class="metric-value">${report.success.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Warnings</div><div class="metric-value">${report.warning.length}</div></div>
+            <div class="metric-card"><div class="metric-label">Errors</div><div class="metric-value">${report.error.length}</div></div>
+        </div>`;
+        
+        report.error.forEach(i => html += `<div><span class="badge badge-error">ERROR</span> ${i}</div>`);
+        report.warning.forEach(i => html += `<div><span class="badge badge-warning">WARNING</span> ${i}</div>`);
+        report.success.forEach(i => html += `<div><span class="badge badge-success">OK</span> ${i}</div>`);
+        
+        container.innerHTML = html;
+    }
+
+    async function buildLatex() {
+        const res = await fetch('/api/build_latex', { method: 'POST' });
+        const data = await res.json();
+        appState.latex_output = data.latex;
+        document.getElementById('latex_output').textContent = data.latex;
+    }
+
+    // Init
+    window.onload = loadState;
+</script>
+</body>
+</html>
